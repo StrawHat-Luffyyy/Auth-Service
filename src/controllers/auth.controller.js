@@ -1,4 +1,5 @@
 import { User } from "../models/user.model.js";
+import jwt from "jsonwebtoken";
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
   try {
@@ -76,7 +77,7 @@ export const loginUser = async (req, res) => {
     const loggedInUser = await User.findById(user._id).select("-password ");
     const options = {
       httpOnly: true,
-      secure: true,
+      secure: false,
     };
 
     return res
@@ -95,6 +96,58 @@ export const loginUser = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal server error",
+    });
+  }
+};
+
+export const newRefreshToken = async (req, res) => {
+  const { refreshToken } = req.cookies;
+  //console.log("Cookies:", req.cookies);
+
+  if (!refreshToken) {
+    return res.status(401).json({
+      success: false,
+      message: "Refresh token is required",
+    });
+  }
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    //console.log("Decoded:", decoded);
+    if (!decoded) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
+    }
+    const user = await User.findOne({
+      _id: decoded.id,
+      refreshToken, // DB validation
+    });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    const { accessToken, newRefreshToken } =
+      await generateAccessTokenAndRefreshToken(user._id);
+
+    const options = {
+      httpOnly: true,
+      secure: false,
+    };
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json({
+        success: true,
+        message: "Refresh token is valid",
+      });
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: "Refresh token expired or invalid",
     });
   }
 };
