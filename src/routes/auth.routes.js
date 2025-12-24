@@ -1,12 +1,20 @@
 import express from "express";
-import { registerUser  , loginUser ,newRefreshToken} from "../controllers/auth.controller.js";
+import {
+  registerUser,
+  loginUser,
+  newRefreshToken,
+  me,
+} from "../controllers/auth.controller.js";
+import { protect } from "../middlewares/auth.middleware.js";
+import { adminProtect } from "../middlewares/auth.middleware.js";
+import { admin } from "../controllers/auth.controller.js";
 
-const router = express.Router()
+const router = express.Router();
 
-router.post('/register' ,registerUser )
-router.post('/login' , loginUser )
-router.post('/refresh' , newRefreshToken )
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+router.post("/refresh", newRefreshToken);
+router.get("/me", protect, me);
+router.get("/admin", protect, adminProtect, admin);
 
-
-
-export default router ;
+export default router;

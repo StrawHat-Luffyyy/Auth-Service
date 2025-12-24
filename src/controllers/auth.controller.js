@@ -151,3 +151,25 @@ export const newRefreshToken = async (req, res) => {
     });
   }
 };
+
+export const me = async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      message: "User not found",
+    });
+  }
+  return res.status(200).json({
+    success: true,
+    message: "User found",
+    user: user,
+  });
+};
+
+export const admin = async (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "Admin route accessed successfully",
+  });
+};
