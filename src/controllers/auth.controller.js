@@ -173,3 +173,18 @@ export const admin = async (req, res) => {
     message: "Admin route accessed successfully",
   });
 };
+
+export const logoutUser = async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  user.refreshToken = null;
+  await user.save({ validateBeforeSave: false });
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+  return res.status(200).json({
+    success: true,
+    message: "User logged out successfully",
+  });
+};
